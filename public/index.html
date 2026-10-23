@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Healthcare Provider Fraud Detection</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <h1>Provider Fraud Detection</h1>
+          <p>XGBoost, provider-level scoring</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Pages">
+        <a href="#/providers" data-page="providers">Providers</a>
+        <a href="#/insights" data-page="insights">Model insights</a>
+        <a href="#/upload" data-page="upload">Upload &amp; predict</a>
+      </nav>
+      <div class="threshold">
+        <label for="thr-slider">Threshold <strong id="thr-value">0.500</strong></label>
+        <input id="thr-slider" type="range" min="0" max="1" step="0.001" value="0.5">
+        <button id="thr-reset" class="btn btn-small" type="button" title="Back to the model threshold">Reset</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="banner" class="banner" hidden role="alert"></div>
+
+    <!-- Page 1: providers -->
+    <section id="page-providers" class="page">
+      <div class="kpis">
+        <div class="card kpi"><span class="kpi-label">Total providers</span><strong id="kpi-total">0</strong></div>
+        <div class="card kpi"><span class="kpi-label">Flagged providers</span><strong id="kpi-flagged">0</strong></div>
+        <div class="card kpi"><span class="kpi-label">Flagged share</span><strong id="kpi-pct">0%</strong></div>
+        <div class="card kpi"><span class="kpi-label">Reimbursed by flagged</span><strong id="kpi-money">$0</strong></div>
+      </div>
+      <p class="risk-line" id="risk-line"></p>
+
+      <div class="card">
+        <div class="controls">
+          <input id="search" type="search" placeholder="Search provider ID" aria-label="Search provider ID" autocomplete="off">
+          <select id="risk-filter" aria-label="Filter by risk level">
+            <option value="all">All risk levels</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <select id="page-size" aria-label="Rows per page">
+            <option value="10">10 per page</option>
+            <option value="25" selected>25 per page</option>
+            <option value="50">50 per page</option>
+            <option value="100">100 per page</option>
+          </select>
+          <button id="download-view" class="btn" type="button">Download CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table id="providers-table">
+            <caption class="sr-only">Scored providers</caption>
+            <thead>
+              <tr>
+                <th><button class="sort" data-sort="Provider">Provider</button></th>
+                <th><button class="sort" data-sort="fraud_probability">Fraud probability</button></th>
+                <th>Risk</th>
+                <th class="num"><button class="sort" data-sort="n_claims">Claims</button></th>
+                <th class="num"><button class="sort" data-sort="reimb_sum">Total reimbursed</button></th>
+                <th class="num hide-sm"><button class="sort" data-sort="reimb_mean">Mean claim</button></th>
+                <th class="num hide-sm"><button class="sort" data-sort="ip_ratio">Inpatient</button></th>
+                <th class="num hide-sm"><button class="sort" data-sort="dup_ratio">Duplicates</button></th>
+              </tr>
+            </thead>
+            <tbody id="providers-body"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span id="pager-info"></span>
+          <div>
+            <button id="prev" class="btn btn-small" type="button">Previous</button>
+            <span id="pager-page"></span>
+            <button id="next" class="btn btn-small" type="button">Next</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 2: model insights -->
+    <section id="page-insights" class="page" hidden>
+      <h2>Validation metrics</h2>
+      <div id="metric-cards" class="kpis"></div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Feature importance</h3>
+          <div id="importance-chart"></div>
+        </div>
+        <div class="card">
+          <h3>Distribution of fraud probability</h3>
+          <div id="histogram"></div>
+          <p class="hint">The dashed line is the current threshold. Providers to its right are flagged.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 3: upload and predict -->
+    <section id="page-upload" class="page" hidden>
+      <div class="card">
+        <h2>Upload a claim-level CSV</h2>
+        <p class="hint">Use the same format as <code>test_imputed.csv</code>. Claims are grouped by provider and each provider is scored once.</p>
+        <div class="controls">
+          <input id="upload-file" type="file" accept=".csv,text/csv" aria-label="Claims CSV file">
+          <button id="upload-run" class="btn btn-primary" type="button">Predict</button>
+          <button id="upload-download" class="btn" type="button" hidden>Download CSV</button>
+        </div>
+        <p id="upload-status" class="hint" role="status"></p>
+        <div id="upload-result" hidden>
+          <p id="upload-summary" class="risk-line"></p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Provider</th><th>Fraud probability</th><th>Risk</th><th class="num">Claims</th><th class="num">Total reimbursed</th></tr></thead>
+              <tbody id="upload-body"></tbody>
+            </table>
+          </div>
+          <p class="hint" id="upload-note"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Provider detail panel -->
+  <aside id="detail" class="drawer" hidden aria-label="Provider details">
+    <div class="drawer-head">
+      <h2 id="detail-title">Provider</h2>
+      <button id="detail-close" class="btn btn-small" type="button" aria-label="Close details">Close</button>
+    </div>
+    <div id="detail-body"></div>
+  </aside>
+
+  <footer class="note" role="note">
+    <strong>Please note:</strong> Flagged means the model suspects fraud. It is not proof. Test data has no labels, so metrics come from the validation split of the training data.
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
