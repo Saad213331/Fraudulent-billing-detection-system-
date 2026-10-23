@@ -19,7 +19,6 @@
       <nav class="tabs" aria-label="Pages">
         <a href="#/providers" data-page="providers">Providers</a>
         <a href="#/insights" data-page="insights">Model insights</a>
-        <a href="#/upload" data-page="upload">Upload &amp; predict</a>
       </nav>
       <div class="threshold">
         <label for="thr-slider">Threshold <strong id="thr-value">0.500</strong></label>
@@ -109,10 +108,11 @@
     <section id="page-upload" class="page" hidden>
       <div class="card">
         <h2>Upload a claim-level CSV</h2>
+        <p class="hint"><strong>Not available in the online version.</strong> Upload and predict needs Python and large files, so it works only when you run the dashboard on your own computer (node server.js).</p>
         <p class="hint">Use the same format as <code>test_imputed.csv</code>. Claims are grouped by provider and each provider is scored once.</p>
         <div class="controls">
-          <input id="upload-file" type="file" accept=".csv,text/csv" aria-label="Claims CSV file">
-          <button id="upload-run" class="btn btn-primary" type="button">Predict</button>
+          <input id="upload-file" type="file" accept=".csv,text/csv" aria-label="Claims CSV file" disabled>
+          <button id="upload-run" class="btn btn-primary" type="button" disabled>Predict</button>
           <button id="upload-download" class="btn" type="button" hidden>Download CSV</button>
         </div>
         <p id="upload-status" class="hint" role="status"></p>
