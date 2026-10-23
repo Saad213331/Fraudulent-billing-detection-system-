@@ -1,0 +1,13 @@
+venv/
+model/
+__pycache__/
+requirements.txt
+app.py
+features.py
+training.py
+export_scores.py
+predict.py
+scoring.py
+train_imputed.csv
+test_imputed.csv
+Train-1542865627584.csv
